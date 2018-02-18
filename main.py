@@ -19,10 +19,11 @@ class AddressBar(QLineEdit):
 class App(QFrame):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("My Web Browser")
+        self.setWindowTitle("Qt Web Browser")
 
         self.StartApp()
         self.setBaseSize(1080,720)
+        self.setWindowIcon(QIcon("logo.png"))
 
 
     def StartApp(self):
@@ -80,6 +81,22 @@ class App(QFrame):
 
         self.newTabShortCut=QShortcut(QKeySequence("Ctrl+N"),self)
         self.newTabShortCut.activated.connect(self.AddTab)
+
+        self.ReloadShortCut=QShortcut(QKeySequence("Ctrl+R"),self)
+        self.ReloadShortCut.activated.connect(self.Reload)
+
+        self.BackShortCut=QShortcut(QKeySequence("Ctrl+B"),self)
+        self.BackShortCut.activated.connect(self.GoBack)
+
+        self.ForwardShortCut = QShortcut(QKeySequence("Ctrl+F"), self)
+        self.ForwardShortCut.activated.connect(self.GoForward)
+
+        index=self.tabar.currentIndex()
+
+        self.ClosedTabShortCut=QShortcut(QKeySequence("Alt+C"),self)
+        self.ClosedTabShortCut.activated.connect(lambda :self.CloseTab(index))
+
+
 
         self.setLayout(self.layout)
         self.show()
@@ -184,6 +201,7 @@ class App(QFrame):
 
 if __name__=="__main__":
     app=QApplication(sys.argv)
+    os.environ["QTWEBENGINE_REMOTE_DEBUGGING"]="667"
     window=App()
 
     with open("main.css","r") as style:
