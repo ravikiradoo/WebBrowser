@@ -32,19 +32,38 @@ class App(QFrame):
 
         self.tabar=QTabBar(movable=True,tabsClosable=True)
         self.tabar.tabCloseRequested.connect(self.CloseTab)
+        self.tabar.tabBarClicked.connect(self.SwitchTab)
 
         self.tabar.setCurrentIndex(0)
+        self.tabar.setDrawBase(False)
         self.layout.addWidget(self.tabar)
+
+
+
+
 
         self.tabCount=0
         self.tabs=[]
 
         self.ToolBar=QWidget()
         self.ToolBarLayout=QHBoxLayout()
+        self.BackButton = QPushButton("<-")
+        self.BackButton.clicked.connect(self.GoBack)
+        self.ForwardButton = QPushButton("->")
+        self.ForwardButton.clicked.connect(self.GoForward)
+        self.ReloadButton=QPushButton("↺")
+        self.ReloadButton.clicked.connect(self.Reload)
+        self.ToolBarLayout.addWidget(self.BackButton)
+        self.ToolBarLayout.addWidget(self.ForwardButton)
+        self.ToolBarLayout.addWidget(self.ReloadButton)
+
+
         self.addressbar=AddressBar()
 
         self.ToolBar.setLayout(self.ToolBarLayout)
         self.ToolBarLayout.addWidget(self.addressbar)
+        self.addressbar.returnPressed.connect(self.BrowseTo)
+
         self.layout.addWidget(self.ToolBar)
 
         self.container=QWidget()
@@ -68,19 +87,87 @@ class App(QFrame):
         i=self.tabCount
         self.tabs.append(QWidget())
         self.tabs[i].layout=QVBoxLayout()
+        self.tabs[i].layout.setContentsMargins(0,0,0,0)
         self.tabs[i].setObjectName("Tab"+str(i))
         self.tabs[i].content=QWebEngineView()
         self.tabs[i].content.load(QUrl.fromUserInput("http://www.google.com"))
+        self.tabs[i].content.titleChanged.connect(lambda : self.setTabContent(i,"title"))
+        self.tabs[i].content.iconChanged.connect(lambda: self.setTabContent(i,"icon"))
         self.tabs[i].layout.addWidget(self.tabs[i].content)
         self.tabs[i].setLayout(self.tabs[i].layout)
         self.container.layout.addWidget(self.tabs[i])
         self.container.layout.setCurrentWidget(self.tabs[i])
-        self.tabar.addTab("New Tab")
-        self.tabar.setTabData(i,"tab"+str(i))
+        self.tabar.addTab("Tab"+str(i))
+        self.tabar.setTabData(i,{"Object":"Tab"+str(i),"initial":i})
         self.tabar.setCurrentIndex(i)
+        self.tabCount+=1
 
 
         pass
+
+    def SwitchTab(self,i):
+        tab_data=self.tabar.tabData(i)
+        print(tab_data["Object"])
+        tab_content=self.findChild(QWidget,tab_data["Object"])
+        self.container.layout.setCurrentWidget(tab_content)
+
+    def BrowseTo(self):
+        text=self.addressbar.text()
+        i=self.tabar.currentIndex()
+        tab=self.tabar.tabData(i)
+        wv=self.findChild(QWidget,tab["Object"]).content
+
+
+        if "http" not in text:
+            if "." not in text:
+                url="https://www.google.co.in/search?q="+text
+            else:
+                url="http;//"+text
+        else:
+            url=text
+
+
+        wv.load(QUrl.fromUserInput(url))
+
+    def setTabContent(self,i,type):
+        tab_name=self.tabs[i].objectName()
+
+        count=0
+        while count<=self.tabCount:
+            if tab_name==self.tabs[count].objectName():
+                if type=="title":
+                    title=self.findChild(QWidget,tab_name).content.title()
+                    self.tabar.setTabText(count,title)
+                    break
+                if type=="icon":
+                    icon=self.findChild(QWidget,tab_name).content.icon()
+                    self.tabar.setTabIcon(count, icon)
+                    break
+
+            else:
+                count+=1
+
+    def GoBack(self):
+        index=self.tabar.currentIndex()
+        tab=self.tabar.tabData(index)["Object"]
+        wv=self.findChild(QWidget,tab).content
+        wv.back()
+
+    def GoForward(self):
+        index=self.tabar.currentIndex()
+        tab=self.tabar.tabData(index)["Object"]
+        wv=self.findChild(QWidget,tab).content
+        wv.forward()
+
+    def Reload(self):
+        index = self.tabar.currentIndex()
+        tab = self.tabar.tabData(index)["Object"]
+        wv = self.findChild(QWidget, tab).content
+        wv.reload()
+
+
+
+
 
 if __name__=="__main__":
     app=QApplication(sys.argv)
