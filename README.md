@@ -1,2 +1,3 @@
 # WebBrowser
-Web Browser using PyQt
+This is Pyqt based web browser
+
