@@ -46,6 +46,7 @@ class App(QFrame):
         self.tabs=[]
 
         self.ToolBar=QWidget()
+        self.ToolBar.setObjectName("Toolbar")
         self.ToolBarLayout=QHBoxLayout()
         self.BackButton = QPushButton("<-")
         self.BackButton.clicked.connect(self.GoBack)
@@ -77,6 +78,9 @@ class App(QFrame):
         self.layout.addWidget(self.container)
         self.AddTab()
 
+        self.newTabShortCut=QShortcut(QKeySequence("Ctrl+N"),self)
+        self.newTabShortCut.activated.connect(self.AddTab)
+
         self.setLayout(self.layout)
         self.show()
 
@@ -93,6 +97,8 @@ class App(QFrame):
         self.tabs[i].content.load(QUrl.fromUserInput("http://www.google.com"))
         self.tabs[i].content.titleChanged.connect(lambda : self.setTabContent(i,"title"))
         self.tabs[i].content.iconChanged.connect(lambda: self.setTabContent(i,"icon"))
+        self.tabs[i].content.urlChanged.connect(lambda: self.setTabContent(i, "url"))
+
         self.tabs[i].layout.addWidget(self.tabs[i].content)
         self.tabs[i].setLayout(self.tabs[i].layout)
         self.container.layout.addWidget(self.tabs[i])
@@ -109,6 +115,8 @@ class App(QFrame):
         tab_data=self.tabar.tabData(i)
         print(tab_data["Object"])
         tab_content=self.findChild(QWidget,tab_data["Object"])
+        url=tab_content.content.url().toString()
+        self.addressbar.setText(url)
         self.container.layout.setCurrentWidget(tab_content)
 
     def BrowseTo(self):
@@ -133,6 +141,11 @@ class App(QFrame):
         tab_name=self.tabs[i].objectName()
 
         count=0
+        if type=="url":
+            url=self.findChild(QWidget,tab_name).content.url().toString()
+            self.addressbar.setText(url)
+            return
+
         while count<=self.tabCount:
             if tab_name==self.tabs[count].objectName():
                 if type=="title":
@@ -172,6 +185,10 @@ class App(QFrame):
 if __name__=="__main__":
     app=QApplication(sys.argv)
     window=App()
+
+    with open("main.css","r") as style:
+        app.setStyleSheet(style.read())
+
     sys.exit(app.exec_())
 
 
